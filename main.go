@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -185,12 +186,25 @@ func (b *Board) Autoplay() {
 }
 
 func (b *Board) AutoplayMove() {
-	// for {
-	// 	// col := rand.Intn(columns)
+	for {
+		col := rand.Intn(columns)
 
-	// 	// if b.IsValidMove(col) {
-	// 	// 	b.PlaceToken(col)
-	// 	// 	break
-	// 	// }
-	// }
+		if b.IsValidMove(col) {
+			b.PlayMove(col)
+			break
+		}
+	}
+}
+
+func (b *Board) IsValidMove(col int) bool {
+	return b.grid[0][col] == ""
+}
+
+func (b *Board) PlaceToken(col int) {
+	for row := rows - 1; row >= 0; row-- {
+		if b.grid[row][col] == "" {
+			b.grid[row][col] = b.current
+			break
+		}
+	}
 }
