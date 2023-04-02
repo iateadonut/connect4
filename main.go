@@ -2,15 +2,18 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
-	rows    = 6
-	columns = 7
+	rows           = 6
+	columns        = 7
+	pause_autoplay = 500
 )
 
 type Board struct {
@@ -23,6 +26,21 @@ type Board struct {
 }
 
 func main() {
+
+	autoplay := flag.Bool("autoplay", false, "Enable autoplay mode")
+	flag.Parse()
+
+	board := Board{}
+
+	if *autoplay {
+		board.Autoplay()
+	} else {
+		board.Play()
+	}
+
+}
+
+func (b *Board) Play() {
 	board := Board{
 		player1: "X",
 		player2: "O",
@@ -145,4 +163,34 @@ func (b *Board) countInDirection(row, col int, player string, direction []int) i
 		}
 	}
 	return count
+}
+
+func (b *Board) Autoplay() {
+	b.PrintBoard()
+
+	for !b.gameOver {
+		b.AutoplayMove()
+		b.SwitchPlayer()
+		b.CheckGameOver()
+
+		b.PrintBoard()
+		time.Sleep(pause_autoplay * time.Millisecond)
+	}
+
+	if b.winner != "" {
+		fmt.Printf("Game Over! Player %s wins!\n", b.winner)
+	} else {
+		fmt.Println("Game Over! It's a draw!")
+	}
+}
+
+func (b *Board) AutoplayMove() {
+	// for {
+	// 	// col := rand.Intn(columns)
+
+	// 	// if b.IsValidMove(col) {
+	// 	// 	b.PlaceToken(col)
+	// 	// 	break
+	// 	// }
+	// }
 }

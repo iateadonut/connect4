@@ -3,6 +3,35 @@
 The goal is to write a connect 4 program that connects to a reactjs frontend, and uses websockets to connect 2 players. It is also an academic and practice exercise.
 
 
+#### man hours: 2:09:32
+
+#### Step 5 Query:
+
+i'd like to write another test, something like a browser test, but in the terminal, where the computer plays against itself.  it should be about a 1/2 second between movies so a human can watch the gameplay.
+this should be written to be conducive to gathering statistics for machine learning, so we can apply machine learning to the strategies by the computer players.
+so i don't think this belongs in the tests folder, but rather as a flag that allows the program to execute.  what do you think?
+
+#### Step 5 Response:
+
+I think you're right. Instead of placing this functionality in the tests folder, you can implement it as a separate mode or flag in the main program. This way, you can run the program in "autoplay" mode, where two computer players play against each other, and you can collect data for machine learning purposes.
+
+To implement this, you can add a command-line flag that enables autoplay mode. First, import the "flag" package at the top of your main.go file:
+
+Next, add the autoplay flag and modify the main function to use the autoplay mode when the flag is set:
+
+Now, add the Autoplay() function to the Board struct:
+
+Finally, implement the AutoplayMove() function in the Board struct. For now, you can use a simple random move strategy, but later you can replace it with a more advanced AI strategy or machine learning model:
+
+Now, when you run the program with the -autoplay flag, it will enter autoplay mode, and two computer players will play against each other with a 1/2 second delay between moves:
+
+````
+$ go run main.go -autoplay
+````
+
+To gather statistics for machine learning, you can modify the AutoplayMove() function and the Autoplay() loop to collect data, such as the current board state and the chosen move, and store it in a format suitable for machine learning training.
+
+
 #### Step 4 Query:
 
 1. how can i see the different command of dlv from the terminal?
