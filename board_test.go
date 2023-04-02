@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"runtime"
 	"testing"
 )
 
@@ -29,8 +27,8 @@ func TestCheckGameOver(t *testing.T) {
 				{"X", "O", "X", "O", "X", "O", ""},
 				{"X", "O", "X", "O", "X", "O", ""},
 				{"O", "X", "O", "X", "O", "X", ""},
-				{"X", "O", "X", "O", "X", "O", ""},
-				{"O", "X", "X", "X", "O", "X", ""},
+				{"X", "X", "X", "O", "X", "O", ""},
+				{"O", "O", "X", "", "", "O", ""},
 				{"", "", "", "", "", "", ""},
 			},
 			gameOver: false,
@@ -38,11 +36,6 @@ func TestCheckGameOver(t *testing.T) {
 	}
 
 	for i, testCase := range testCases {
-
-		fmt.Printf("Running test case %d\n", i+1)
-		if i == 1 { // The second test case
-			runtime.Breakpoint()
-		}
 
 		board := Board{
 			grid:    testCase.grid,
