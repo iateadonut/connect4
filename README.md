@@ -3,6 +3,25 @@
 The goal is to write a connect 4 program that connects to a reactjs frontend, and uses websockets to connect 2 players. It is also an academic and practice exercise.
 
 
+#### Step 6 Query:
+
+i've added your input and made some edits.  the code does not work.  it loops infinitely but never places any moves.  here is the code as i edited it.  i will look for errors while you look it over as well:
+
+(all source code given back)
+
+#### Step 6 Response:
+
+The issue is that you're not initializing the Board struct correctly in the Autoplay() function. The current field is not set to a valid player, so the IsValidMove() function will always return false because the top cell in the specified column will never be equal to the empty string.
+
+To fix the issue, update the Autoplay() function to properly initialize the Board struct:
+
+(code redacted; put in main.go)
+
+Now, the autoplay mode should work correctly, and the computer players will make valid moves.
+
+NOTE: rand() was not seeded.
+
+
 #### man hours: 2:09:32
 
 #### Step 5 Query:

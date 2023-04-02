@@ -28,6 +28,8 @@ type Board struct {
 
 func main() {
 
+	rand.Seed(time.Now().UnixNano())
+
 	autoplay := flag.Bool("autoplay", false, "Enable autoplay mode")
 	flag.Parse()
 
@@ -167,6 +169,10 @@ func (b *Board) countInDirection(row, col int, player string, direction []int) i
 }
 
 func (b *Board) Autoplay() {
+	b.player1 = "X"
+	b.player2 = "O"
+	b.current = "X"
+
 	b.PrintBoard()
 
 	for !b.gameOver {
@@ -190,7 +196,11 @@ func (b *Board) AutoplayMove() {
 		col := rand.Intn(columns)
 
 		if b.IsValidMove(col) {
-			b.PlayMove(col)
+			err := b.PlayMove(col)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 			break
 		}
 	}
