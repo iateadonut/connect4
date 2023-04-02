@@ -95,6 +95,54 @@ func (b *Board) PrintBoard() {
 }
 
 func (b *Board) CheckGameOver() {
-	// Check for win conditions here
-	// If a player has won, set b.gameOver = true and b.winner to the winning player
+	for row := 0; row < rows; row++ {
+		for col := 0; col < columns; col++ {
+			if b.grid[row][col] == "" {
+				continue
+			}
+
+			player := b.grid[row][col]
+			if b.checkWin(row, col, player) {
+				b.gameOver = true
+				b.winner = player
+				return
+			}
+		}
+	}
+}
+
+func (b *Board) checkWin(row, col int, player string) bool {
+	directions := [][]int{
+		{1, 0},  // Vertical
+		{0, 1},  // Horizontal
+		{1, 1},  // Diagonal up-right
+		{-1, 1}, // Diagonal up-left
+	}
+
+	for _, direction := range directions {
+		count := b.countInDirection(row, col, player, direction)
+		if count >= 4 {
+			return true
+		}
+	}
+	return false
+}
+
+func (b *Board) countInDirection(row, col int, player string, direction []int) int {
+	count := 1
+	for i := 1; i < 4; i++ {
+		newRow := row + i*direction[0]
+		newCol := col + i*direction[1]
+
+		if newRow < 0 || newRow >= rows || newCol < 0 || newCol >= columns {
+			break
+		}
+
+		if b.grid[newRow][newCol] == player {
+			count++
+		} else {
+			break
+		}
+	}
+	return count
 }
