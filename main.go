@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -14,7 +15,7 @@ import (
 const (
 	rows           = 6
 	columns        = 7
-	pause_autoplay = 500
+	pause_autoplay = 0
 )
 
 type Board struct {
@@ -24,6 +25,17 @@ type Board struct {
 	player2  string
 	gameOver bool
 	winner   string
+}
+
+type MoveData struct {
+	Player string
+	Move   int
+	State  [][]int
+}
+
+type GameData struct {
+	Winner   string
+	MoveData *MoveData
 }
 
 func main() {
@@ -173,12 +185,27 @@ func (b *Board) Autoplay() {
 	b.player2 = "O"
 	b.current = "X"
 
+	gameDataList := []GameData{}
+
 	b.PrintBoard()
 
 	for !b.gameOver {
-		b.AutoplayMove()
+		move := b.AutoplayMove()
+    b.CheckGameOver()
+		moveData := &MoveData{
+			Player: b.current,
+			Move:   move,
+			//Board:  b.grid,
+      State:  b.GameState(),
+		}
+
+		gameData := GameData{
+			Winner:   b.winner,
+			MoveData: moveData,
+		}
+		gameDataList = append(gameDataList, gameData)
+
 		b.SwitchPlayer()
-		b.CheckGameOver()
 
 		b.PrintBoard()
 		time.Sleep(pause_autoplay * time.Millisecond)
@@ -189,9 +216,44 @@ func (b *Board) Autoplay() {
 	} else {
 		fmt.Println("Game Over! It's a draw!")
 	}
+    
+  // Replace the ioutil.WriteFile code with the following:
+  file, err := os.OpenFile("game_data.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+  if err != nil {
+  	fmt.Println("Error opening file:", err)
+  	return
+  }
+  defer file.Close()
+  
+  encoder := json.NewEncoder(file)
+  err = encoder.Encode(gameDataList)
+  if err != nil {
+  	fmt.Println("Error writing JSON data to file:", err)
+  	return
+  }
 }
 
-func (b *Board) AutoplayMove() {
+func (b *Board) GameState() [][]int {
+	state := make([][]int, rows)
+	for i := range state {
+		state[i] = make([]int, columns)
+	}
+	for row := 0; row < rows; row++ {
+		for col := 0; col < columns; col++ {
+			switch b.grid[row][col] {
+			case "":
+				state[row][col] = 0
+			case b.player1:
+				state[row][col] = -1
+			case b.player2:
+				state[row][col] = 1
+			}
+		}
+	}
+	return state
+}
+
+func (b *Board) AutoplayMove() int {
 	for {
 		col := rand.Intn(columns)
 
@@ -201,7 +263,7 @@ func (b *Board) AutoplayMove() {
 				fmt.Println(err)
 				continue
 			}
-			break
+			return col
 		}
 	}
 }
