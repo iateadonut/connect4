@@ -3,13 +3,18 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"flag"
+
+	// "flag"
 	"fmt"
+	"log"
 	"math/rand"
+	"net"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 const (
@@ -21,11 +26,21 @@ const (
 type Board struct {
 	grid     [rows][columns]string
 	current  string
-	player1  string
-	player2  string
+	player1  Player
+	player2  Player
 	gameOver bool
 	winner   string
-  api      bool
+}
+
+type BoardStateMessage struct {
+	BoardState [][]int `json:"board_state"`
+	Message    string  `json:"message"`
+}
+
+type Player struct {
+    Symbol string
+    State  string
+    Conn   net.Conn
 }
 
 type MoveData struct {
@@ -39,48 +54,90 @@ type GameData struct {
 	MoveData *MoveData
 }
 
+// func main() {
+
+// 	rand.Seed(time.Now().UnixNano())
+
+// 	autoplay := flag.Bool("autoplay", false, "Enable autoplay mode")
+//   api := flag.Bool("api", false, "Return state as array")
+// 	flag.Parse()
+
+//   board := Board{api:*api}
+//   // fmt.Println(board.api)
+
+// 	if *autoplay {
+// 		board.Autoplay()
+// 	} else {
+// 		board.Play()
+// 	}
+
+// }
+
 func main() {
+    _ = godotenv.Load(".connect4.env") // Error ignored if the file doesn't exist
 
-	rand.Seed(time.Now().UnixNano())
+    // Get the URL and port from environment variables with default values
+    url := os.Getenv("URL")
+    if url == "" {
+      url = "localhost"
+    }
+    port := os.Getenv("PORT")
+    if port == "" {
+      port = "51234"
+    }
 
-	autoplay := flag.Bool("autoplay", false, "Enable autoplay mode")
-  api := flag.Bool("api", false, "Return state as array")
-	flag.Parse()
+    // Use the variables in your program...
+    ln, err := net.Listen("tcp", ":"+port)
+    if err != nil {
+      log.Fatalf("Could not start server: %s", err.Error())
+    }
+    defer ln.Close()
 
-  board := Board{api:*api}
-  // fmt.Println(board.api)
+    log.Printf("Server is running on %s:%s", url, port)
 
-	if *autoplay {
-		board.Autoplay()
-	} else {
-		board.Play()
-	}
+    var player1 Player
+    var player2 Player
 
+    for {
+        conn, err := ln.Accept()
+        if err != nil {
+            log.Println(err)
+            continue
+        }
+
+        if player1.Conn == nil {
+            player1 = Player{
+                Symbol: "X",
+                State:  "waiting",
+                Conn:   conn,
+            }
+        } else if player2.Conn == nil {
+            player2 = Player{
+                Symbol: "O",
+                State:  "waiting",
+                Conn:   conn,
+            }
+
+            go startNewGame(player1, player2)
+        }
+    }
 }
 
-func (b *Board) Play() {
+func startNewGame(player1, player2 Player) {
+
 	board := Board{
-		player1: "X",
-		player2: "O",
-		current: "X",
-    api: b.api,
+		// grid:     [rows][columns]string,
+		current:  player1.Symbol,
+		player1:  player1,
+		player2:  player2,
+		gameOver: false,
+		// winner:   "",
 	}
 
 	board.PrintBoard()
 
-	reader := bufio.NewReader(os.Stdin)
-
 	for !board.gameOver {
-		fmt.Printf("Player %s, enter column number (1-%d): ", board.current, columns)
-		text, _ := reader.ReadString('\n')
-		text = strings.TrimSpace(text)
-		col, err := strconv.Atoi(text)
-		if err != nil || col < 1 || col > columns {
-			fmt.Println("Invalid input, please try again.")
-			continue
-		}
-
-		err = board.PlayMove(col - 1)
+		err := board.PlayTurn()
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -94,6 +151,102 @@ func (b *Board) Play() {
 	fmt.Printf("Game over! %s wins!\n", board.winner)
 }
 
+func (b *Board) PlayTurn() error {
+	var currentPlayer Player
+	if b.current == b.player1.Symbol {
+		currentPlayer = b.player1
+	} else {
+		currentPlayer = b.player2
+	}
+
+	boardState := b.GameState()
+	message := fmt.Sprintf("Player %s, enter column number (1-%d):", b.current, columns)
+	boardStateMessage := BoardStateMessage{BoardState: boardState, Message: message}
+
+	jsonData, err := json.Marshal(boardStateMessage)
+	if err != nil {
+		return fmt.Errorf("Error marshaling board state message: %w", err)
+	}
+
+	_, err = currentPlayer.Conn.Write(append(jsonData, '\n'))
+	if err != nil {
+		return fmt.Errorf("Error writing to player connection: %w", err)
+	}
+
+	// fmt.Fprintf(currentPlayer.Conn, "Player %s, enter column number (1-%d): \n", b.current, columns)
+	
+	reader := bufio.NewReader(currentPlayer.Conn)
+	text, err := reader.ReadString('\n')
+	if err != nil {
+		return fmt.Errorf("Error reading from player: %w", err)
+	}
+
+	text = strings.TrimSpace(text)
+	col, err := strconv.Atoi(text)
+	if err != nil || col < 1 || col > columns {
+		fmt.Fprintln(currentPlayer.Conn, "Invalid input, please try again.")
+		return fmt.Errorf("Invalid input")
+	}
+
+	err = b.PlayMove(col - 1)
+	if err != nil {
+		fmt.Fprintln(currentPlayer.Conn, err)
+		return err
+	}
+
+	// Send the board state back to the current player without a message
+  boardState = b.GameState()
+	boardStateMessage = BoardStateMessage{BoardState: boardState, Message: ""}
+
+  jsonData, err = json.Marshal(boardStateMessage)
+	if err != nil {
+		return fmt.Errorf("Error marshaling board state message: %w", err)
+	}
+
+	_, err = currentPlayer.Conn.Write(append(jsonData, '\n'))
+	if err != nil {
+		return fmt.Errorf("Error writing to player connection: %w", err)
+	}
+
+	return nil
+}
+
+// func (b *Board) Play(conn net.Conn) {
+// 	// board := Board{
+// 	// 	player1: "X",
+// 	// 	player2: "O",
+// 	// 	current: "X",
+//  //    api: b.api,
+// 	// }
+
+// 	// board.PrintBoard()
+
+// 	reader := bufio.NewReader(conn)
+
+// 	for !board.gameOver {
+// 		fmt.Printf("Player %s, enter column number (1-%d): ", board.current, columns)
+// 		text, _ := reader.ReadString('\n')
+// 		text = strings.TrimSpace(text)
+// 		col, err := strconv.Atoi(text)
+// 		if err != nil || col < 1 || col > columns {
+// 			fmt.Println("Invalid input, please try again.")
+// 			continue
+// 		}
+
+// 		err = board.PlayMove(col - 1)
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			continue
+// 		}
+
+// 		board.PrintBoard()
+// 		board.CheckGameOver()
+// 		board.SwitchPlayer()
+// 	}
+
+// 	fmt.Printf("Game over! %s wins!\n", board.winner)
+// }
+
 func (b *Board) PlayMove(col int) error {
 	for row := rows - 1; row >= 0; row-- {
 		if b.grid[row][col] == "" {
@@ -105,19 +258,14 @@ func (b *Board) PlayMove(col int) error {
 }
 
 func (b *Board) SwitchPlayer() {
-	if b.current == b.player1 {
-		b.current = b.player2
+	if b.current == b.player1.Symbol {
+		b.current = b.player2.Symbol
 	} else {
-		b.current = b.player1
+		b.current = b.player1.Symbol
 	}
 }
 
 func (b *Board) PrintBoard() {
-  if(true == b.api) {
-    fmt.Println(b.GameState())
-    return
-  }
-  fmt.Printf("api: %v", b.api)
 	fmt.Println()
 	fmt.Print("|1||2||3||4||5||6||7|")
 	fmt.Println()
@@ -196,8 +344,8 @@ func (b *Board) countInDirection(row, col int, player string, direction []int) i
 }
 
 func (b *Board) Autoplay() {
-	b.player1 = "X"
-	b.player2 = "O"
+	b.player1.Symbol = "X"
+	b.player2.Symbol = "O"
 	b.current = "X"
 
 	gameDataList := []GameData{}
@@ -258,9 +406,9 @@ func (b *Board) GameState() [][]int {
 			switch b.grid[row][col] {
 			case "":
 				state[row][col] = 0
-			case b.player1:
+			case b.player1.Symbol:
 				state[row][col] = -1
-			case b.player2:
+			case b.player2.Symbol:
 				state[row][col] = 1
 			}
 		}
