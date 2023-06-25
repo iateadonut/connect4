@@ -25,6 +25,7 @@ type Board struct {
 	player2  string
 	gameOver bool
 	winner   string
+  api      bool
 }
 
 type MoveData struct {
@@ -43,9 +44,11 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	autoplay := flag.Bool("autoplay", false, "Enable autoplay mode")
+  api := flag.Bool("api", false, "Return state as array")
 	flag.Parse()
 
-	board := Board{}
+  board := Board{api:*api}
+  // fmt.Println(board.api)
 
 	if *autoplay {
 		board.Autoplay()
@@ -60,6 +63,7 @@ func (b *Board) Play() {
 		player1: "X",
 		player2: "O",
 		current: "X",
+    api: b.api,
 	}
 
 	board.PrintBoard()
@@ -109,6 +113,11 @@ func (b *Board) SwitchPlayer() {
 }
 
 func (b *Board) PrintBoard() {
+  if(true == b.api) {
+    fmt.Println(b.GameState())
+    return
+  }
+  fmt.Printf("api: %v", b.api)
 	fmt.Println()
 	fmt.Print("|1||2||3||4||5||6||7|")
 	fmt.Println()
@@ -128,11 +137,13 @@ func (b *Board) PrintBoard() {
 }
 
 func (b *Board) CheckGameOver() {
+  filledCells := 0
 	for row := 0; row < rows; row++ {
 		for col := 0; col < columns; col++ {
 			if b.grid[row][col] == "" {
 				continue
 			}
+      filledCells++
 
 			player := b.grid[row][col]
 			if b.checkWin(row, col, player) {
@@ -142,6 +153,10 @@ func (b *Board) CheckGameOver() {
 			}
 		}
 	}
+
+  if filledCells == rows*columns {
+    b.gameOver = true
+  }
 }
 
 func (b *Board) checkWin(row, col int, player string) bool {
