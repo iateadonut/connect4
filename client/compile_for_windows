@@ -1,0 +1,2 @@
+#!/bin/bash
+GOOS=windows GOARCH=amd64 go build -o connect4-client.exe -ldflags "-s -w" main.go

@@ -147,8 +147,29 @@ func startNewGame(player1, player2 Player) {
 		board.CheckGameOver()
 		board.SwitchPlayer()
 	}
+  
+	boardState := board.GameState()
+  message := fmt.Sprintf("Game over! %s wins!\n", board.winner)
+	// message := fmt.Sprintf("Player %s, enter column number (1-%d):", b.current, columns)
+	boardStateMessage := BoardStateMessage{BoardState: boardState, Message: message}
 
-	fmt.Printf("Game over! %s wins!\n", board.winner)
+	jsonData, err := json.Marshal(boardStateMessage)
+	if err != nil {
+		fmt.Errorf("Error marshaling board state message: %w", err)
+	}
+
+	_, err = player1.Conn.Write(append(jsonData, '\n'))
+	if err != nil {
+		fmt.Errorf("Error writing to player connection: %w", err)
+	}
+
+  	_, err = player2.Conn.Write(append(jsonData, '\n'))
+	if err != nil {
+		fmt.Errorf("Error writing to player connection: %w", err)
+	}
+
+
+	fmt.Printf(message)
 }
 
 func (b *Board) PlayTurn() error {

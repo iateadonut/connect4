@@ -1,0 +1,3 @@
+#!/bin/bash
+# GOARCH=arm64 for M1 chips
+GOOS=darwin GOARCH=amd64 go build -o connect4-client-mac -ldflags "-s -w" main.go
