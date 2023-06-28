@@ -35,6 +35,8 @@ type Board struct {
 type BoardStateMessage struct {
 	BoardState [][]int `json:"board_state"`
 	Message    string  `json:"message"`
+  Done       bool
+  Winner     bool
 }
 
 type Player struct {
@@ -150,26 +152,49 @@ func startNewGame(player1, player2 Player) {
   
 	boardState := board.GameState()
   message := fmt.Sprintf("Game over! %s wins!\n", board.winner)
-	// message := fmt.Sprintf("Player %s, enter column number (1-%d):", b.current, columns)
-	boardStateMessage := BoardStateMessage{BoardState: boardState, Message: message}
 
-	jsonData, err := json.Marshal(boardStateMessage)
+  player1win := false
+  player2win := false
+  if board.winner == player1.Symbol {
+    player1win = true
+    player2win = false
+  } else {
+    player2win = true
+    player1win = false
+  }
+  player1boardStateMessage := BoardStateMessage{BoardState: boardState,
+  Message: message, Done: true, Winner: player1win}
+  player2boardStateMessage := BoardStateMessage{BoardState: boardState,
+  Message: message, Done: true, Winner: player2win}
+
+	jsonData1, err := json.Marshal(player1boardStateMessage)
+	if err != nil {
+		fmt.Errorf("Error marshaling board state message: %w", err)
+	}
+  
+ 	jsonData2, err := json.Marshal(player2boardStateMessage)
 	if err != nil {
 		fmt.Errorf("Error marshaling board state message: %w", err)
 	}
 
-	_, err = player1.Conn.Write(append(jsonData, '\n'))
+
+	_, err = player1.Conn.Write(append(jsonData1, '\n'))
 	if err != nil {
 		fmt.Errorf("Error writing to player connection: %w", err)
 	}
 
-  	_, err = player2.Conn.Write(append(jsonData, '\n'))
+  _, err = player2.Conn.Write(append(jsonData2, '\n'))
 	if err != nil {
 		fmt.Errorf("Error writing to player connection: %w", err)
 	}
 
+  fmt.Println(player1)
+  fmt.Println(string(jsonData1))
+  fmt.Println(player2)
+  fmt.Println(string(jsonData2))
 
 	fmt.Printf(message)
+
 }
 
 func (b *Board) PlayTurn() error {
