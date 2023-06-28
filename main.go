@@ -56,24 +56,6 @@ type GameData struct {
 	MoveData *MoveData
 }
 
-// func main() {
-
-// 	rand.Seed(time.Now().UnixNano())
-
-// 	autoplay := flag.Bool("autoplay", false, "Enable autoplay mode")
-//   api := flag.Bool("api", false, "Return state as array")
-// 	flag.Parse()
-
-//   board := Board{api:*api}
-//   // fmt.Println(board.api)
-
-// 	if *autoplay {
-// 		board.Autoplay()
-// 	} else {
-// 		board.Play()
-// 	}
-
-// }
 
 func main() {
     _ = godotenv.Load(".connect4.env") // Error ignored if the file doesn't exist
@@ -97,8 +79,7 @@ func main() {
 
     log.Printf("Server is running on %s:%s", url, port)
 
-    var player1 Player
-    var player2 Player
+    playerQueue := make([]Player, 0)
 
     for {
         conn, err := ln.Accept()
@@ -107,20 +88,21 @@ func main() {
             continue
         }
 
-        if player1.Conn == nil {
-            player1 = Player{
-                Symbol: "X",
-                State:  "waiting",
-                Conn:   conn,
-            }
-        } else if player2.Conn == nil {
-            player2 = Player{
-                Symbol: "O",
-                State:  "waiting",
-                Conn:   conn,
-            }
+        player := Player{
+          State: "waiting",
+          Conn:  conn,
+        }
+        playerQueue = append(playerQueue, player)
+
+        if len(playerQueue) >= 2 {
+            player1 := playerQueue[0]
+            player1.Symbol = "X"
+            player2 := playerQueue[1]
+            player2.Symbol = "O"
 
             go startNewGame(player1, player2)
+
+            playerQueue = playerQueue[2:]
         }
     }
 }
@@ -257,41 +239,6 @@ func (b *Board) PlayTurn() error {
 	return nil
 }
 
-// func (b *Board) Play(conn net.Conn) {
-// 	// board := Board{
-// 	// 	player1: "X",
-// 	// 	player2: "O",
-// 	// 	current: "X",
-//  //    api: b.api,
-// 	// }
-
-// 	// board.PrintBoard()
-
-// 	reader := bufio.NewReader(conn)
-
-// 	for !board.gameOver {
-// 		fmt.Printf("Player %s, enter column number (1-%d): ", board.current, columns)
-// 		text, _ := reader.ReadString('\n')
-// 		text = strings.TrimSpace(text)
-// 		col, err := strconv.Atoi(text)
-// 		if err != nil || col < 1 || col > columns {
-// 			fmt.Println("Invalid input, please try again.")
-// 			continue
-// 		}
-
-// 		err = board.PlayMove(col - 1)
-// 		if err != nil {
-// 			fmt.Println(err)
-// 			continue
-// 		}
-
-// 		board.PrintBoard()
-// 		board.CheckGameOver()
-// 		board.SwitchPlayer()
-// 	}
-
-// 	fmt.Printf("Game over! %s wins!\n", board.winner)
-// }
 
 func (b *Board) PlayMove(col int) error {
 	for row := rows - 1; row >= 0; row-- {
