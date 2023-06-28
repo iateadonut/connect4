@@ -36,6 +36,7 @@ func main() {
 		fmt.Println("Failed to connect to server:", err)
 		os.Exit(1)
 	}
+  fmt.Println("Connected to " + url + ":" + port)
 	defer conn.Close()
 
 	go listenForServerMessages(conn)
@@ -73,9 +74,9 @@ func listenForServerMessages(conn net.Conn) {
 		printBoardState(boardStateMessage.BoardState)
 		fmt.Println(boardStateMessage.Message)
 
-		if strings.HasPrefix(boardStateMessage.Message, "Player") {
-			fmt.Print("Enter column number (1-7): ")
-		}
+		// if strings.HasPrefix(boardStateMessage.Message, "Player") {
+		// 	fmt.Print("Enter column number (1-7): ")
+		// }
 	}
 }
 
