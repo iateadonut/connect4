@@ -118,14 +118,42 @@ func startNewGame(player1, player2 Player) {
 		// winner:   "",
 	}
 
+	// Close the connections at the end of the game
+	defer func() {
+		if player1.Conn != nil {
+			_ = player1.Conn.Close()
+		}
+		if player2.Conn != nil {
+			_ = player2.Conn.Close()
+		}
+	}()
+
 	board.PrintBoard()
 
 	for !board.gameOver {
 		err := board.PlayTurn()
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+    if err != nil {
+        if strings.Contains(err.Error(), "broken pipe") {
+            // If the error is a timeout, then the player has disconnected
+            fmt.Println("A player has disconnected")
+            
+            // Notify the other player
+            otherPlayer := board.GetOtherPlayer()
+            msg := "The other player has disconnected. The game has been stopped."
+            _, writeErr := otherPlayer.Conn.Write([]byte(msg))
+            if writeErr != nil {
+                fmt.Println("Failed to send disconnect message to other player:", writeErr)
+            }
+
+            // Stop the game
+            board.gameOver = true
+            continue
+        } else {
+            // If the error is something else, just print it and continue
+            fmt.Println(err)
+            continue
+        }
+    }
 
 		board.PrintBoard()
 		board.CheckGameOver()
@@ -238,6 +266,15 @@ func (b *Board) PlayTurn() error {
 
 	return nil
 }
+
+func (b *Board) GetOtherPlayer() *Player {
+    if b.current == b.player1.Symbol {
+        return &b.player2
+    } else {
+        return &b.player1
+    }
+}
+
 
 
 func (b *Board) PlayMove(col int) error {
