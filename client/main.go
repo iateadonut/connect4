@@ -15,6 +15,9 @@ import (
 type BoardStateMessage struct {
 	BoardState [][]int `json:"board_state"`
 	Message    string  `json:"message"`
+  YourTurn   bool
+  Done       bool
+  Winner     bool
 }
 
 func main() {

@@ -35,6 +35,7 @@ type Board struct {
 type BoardStateMessage struct {
 	BoardState [][]int `json:"board_state"`
 	Message    string  `json:"message"`
+  YourTurn   bool
   Done       bool
   Winner     bool
 }
@@ -93,6 +94,7 @@ func main() {
           Conn:  conn,
         }
         playerQueue = append(playerQueue, player)
+        log.Printf("new player added to queue")
 
         if len(playerQueue) >= 2 {
             player1 := playerQueue[0]
@@ -209,15 +211,18 @@ func startNewGame(player1, player2 Player) {
 
 func (b *Board) PlayTurn() error {
 	var currentPlayer Player
+  var otherPlayer Player
 	if b.current == b.player1.Symbol {
 		currentPlayer = b.player1
+    otherPlayer = b.player2
 	} else {
 		currentPlayer = b.player2
+    otherPlayer = b.player1
 	}
 
 	boardState := b.GameState()
 	message := fmt.Sprintf("Player %s, enter column number (1-%d):", b.current, columns)
-	boardStateMessage := BoardStateMessage{BoardState: boardState, Message: message}
+	boardStateMessage := BoardStateMessage{BoardState: boardState, Message: message, YourTurn: true}
 
 	jsonData, err := json.Marshal(boardStateMessage)
 	if err != nil {
@@ -225,6 +230,19 @@ func (b *Board) PlayTurn() error {
 	}
 
 	_, err = currentPlayer.Conn.Write(append(jsonData, '\n'))
+	if err != nil {
+		return fmt.Errorf("Error writing to player connection: %w", err)
+	}
+
+  otherPlayerBoardStateMessage := BoardStateMessage{BoardState: boardState,
+    Message: "Wait for other player's turn", YourTurn: false}
+
+	jsonDataO, err := json.Marshal(otherPlayerBoardStateMessage)
+	if err != nil {
+		return fmt.Errorf("Error marshaling board state message: %w", err)
+	}
+
+	_, err = otherPlayer.Conn.Write(append(jsonDataO, '\n'))
 	if err != nil {
 		return fmt.Errorf("Error writing to player connection: %w", err)
 	}
@@ -240,6 +258,7 @@ func (b *Board) PlayTurn() error {
 	text = strings.TrimSpace(text)
 	col, err := strconv.Atoi(text)
 	if err != nil || col < 1 || col > columns {
+    fmt.Print(col)
 		fmt.Fprintln(currentPlayer.Conn, "Invalid input, please try again.")
 		return fmt.Errorf("Invalid input")
 	}
@@ -250,19 +269,6 @@ func (b *Board) PlayTurn() error {
 		return err
 	}
 
-	// Send the board state back to the current player without a message
-  boardState = b.GameState()
-	boardStateMessage = BoardStateMessage{BoardState: boardState, Message: ""}
-
-  jsonData, err = json.Marshal(boardStateMessage)
-	if err != nil {
-		return fmt.Errorf("Error marshaling board state message: %w", err)
-	}
-
-	_, err = currentPlayer.Conn.Write(append(jsonData, '\n'))
-	if err != nil {
-		return fmt.Errorf("Error writing to player connection: %w", err)
-	}
 
 	return nil
 }

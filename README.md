@@ -1,6 +1,14 @@
 #### This was created with Chat GPT with GPT-4.
 
-The goal is to write a connect 4 program that connects to a reactjs frontend, and uses websockets to connect 2 players. It is also an academic and practice exercise.
+The goal has changed.  Now I'm working on re-inforcement ML using Farama Gymnasium.
+
+This current version is deployed over telnet!  Aren't you impressed?  I'm like some kind of 90's guy.  You can see if it's working at "telnet 100wires.com 51233" - you'll need two people to login shortly after each other.
+
+In this version, you can hit the running golang server through a python trainer (that doesn't train yet) by going into /ml and running: python connect4_gym_train_dqn.py
+
+The goal (was, but is now secondary) to write a connect 4 program that connects to a reactjs frontend, and uses websockets to connect 2 players. It is also an academic and practice exercise.
+
+As you can see, I tried to create a log of creating this with ChatGPT.  That's laborious and anyone can do it, so I stopped.  The original point was to figure out how you can have a feedback system in place to remove the equipment between the keyboard and the chair, but that's for another project.
 
 
 #### Step 6 Query:
