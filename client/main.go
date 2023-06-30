@@ -71,6 +71,7 @@ func listenForServerMessages(conn net.Conn) {
 		err = json.Unmarshal([]byte(message), &boardStateMessage)
 		if err != nil {
 			fmt.Println("Failed to parse server message:", err)
+      fmt.Println(string(message))
 			continue
 		}
 

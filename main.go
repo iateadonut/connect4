@@ -151,7 +151,22 @@ func startNewGame(player1, player2 Player) {
             board.gameOver = true
             continue
         } else {
-            // If the error is something else, just print it and continue
+            thisPlayer := board.GetPlayer()
+            boardStateMessage := BoardStateMessage{
+              BoardState: board.GameState(),
+              Message: err.Error(),
+            }
+            
+            json0, err := json.Marshal(boardStateMessage)
+            if err != nil {
+              fmt.Errorf("Error marshaling board state message: %w", err)
+            }
+
+            _, writeErr := thisPlayer.Conn.Write(append(json0, '\n')) 
+            // fmt.Println(json0)
+            if writeErr != nil {
+                fmt.Println("Failed to send message to player:", writeErr)
+            }
             fmt.Println(err)
             continue
         }
@@ -163,7 +178,7 @@ func startNewGame(player1, player2 Player) {
 	}
   
 	boardState := board.GameState()
-  message := fmt.Sprintf("Game over! %s wins!\n", board.winner)
+  message := fmt.Sprintf("Game over! %s wins!", board.winner)
 
   player1win := false
   player2win := false
@@ -259,13 +274,13 @@ func (b *Board) PlayTurn() error {
 	col, err := strconv.Atoi(text)
 	if err != nil || col < 1 || col > columns {
     fmt.Print(col)
-		fmt.Fprintln(currentPlayer.Conn, "Invalid input, please try again.")
+		// fmt.Fprintln(currentPlayer.Conn, "Invalid input, please try again.")
 		return fmt.Errorf("Invalid input")
 	}
 
 	err = b.PlayMove(col - 1)
 	if err != nil {
-		fmt.Fprintln(currentPlayer.Conn, err)
+		// fmt.Fprintln(currentPlayer.Conn, err)
 		return err
 	}
 
@@ -281,6 +296,13 @@ func (b *Board) GetOtherPlayer() *Player {
     }
 }
 
+func (b *Board) GetPlayer() *Player {
+    if b.current == b.player2.Symbol {
+        return &b.player2
+    } else {
+        return &b.player1
+    }
+}
 
 
 func (b *Board) PlayMove(col int) error {
