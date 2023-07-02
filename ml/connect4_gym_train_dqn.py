@@ -20,15 +20,12 @@ def train(agent, timesteps, i):
 #    agent.save('connect4-'+str(i))
 
 def main():
-    url = "localhost"  # Replace with your server URL
-    port = "51234"  # Replace with your server port
+    url = "localhost" 
+    port = "51234" 
 
     # Initialize the environment and the agent
     env1 = Connect4Env(url, port)
     env2 = Connect4Env(url, port)
-
-    agent1 = DQN("MlpPolicy", env1, verbose=1)
-    agent2 = DQN("MlpPolicy", env2, verbose=1)
 
     # agent1_file = "connect4_1.zip"
     # agent2_file = "connect4_2.zip"
@@ -48,7 +45,7 @@ def main():
     agent1 = DQN("MlpPolicy", env1, verbose=1)
     agent2 = DQN("MlpPolicy", env2, verbose=1)
 
-    num_games = 1   # Number of games to play for training
+    num_games = 2   # Number of games to play for training
     timesteps = 10000000
 
 

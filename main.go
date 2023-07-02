@@ -140,12 +140,12 @@ func startNewGame(player1, player2 Player) {
             fmt.Println("A player has disconnected")
             
             // Notify the other player
-            otherPlayer := board.GetOtherPlayer()
-            msg := "The other player has disconnected. The game has been stopped."
-            _, writeErr := otherPlayer.Conn.Write([]byte(msg))
-            if writeErr != nil {
-                fmt.Println("Failed to send disconnect message to other player:", writeErr)
-            }
+            // otherPlayer := board.GetOtherPlayer()
+            // msg := "The other player has disconnected. The game has been stopped."
+            // _, writeErr := otherPlayer.Conn.Write([]byte(msg))
+            // if writeErr != nil {
+            //     fmt.Println("Failed to send disconnect message to other player:", writeErr)
+            // }
 
             // Stop the game
             board.gameOver = true

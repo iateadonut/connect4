@@ -119,7 +119,13 @@ class Connect4Env(gym.Env):
             print(str(inspect.currentframe().f_lineno) + ": " + raw_message)
             print(str(inspect.currentframe().f_lineno) + ": " + message)
 
-            state_message = json.loads(message)
+            try:
+                state_message = json.loads(message)
+            except json.decoder.JSONDecodeError:
+                #if it made it here and there's an error, something happened that cut off the payload.  simply end the game:
+                return 0, 0, True, True, {} 
+
+
             if 'message' in state_message and ' is full' in state_message['message']:
                 raw_message = None
                 loops += 1 
