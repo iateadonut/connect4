@@ -1,8 +1,8 @@
-### Connect 4 and Reinforcement Learning
+# Connect 4 and Reinforcement Learning
 
-#### Quick Start
+## Quick Start
 
-to train:
+### to train:
 
 in one terminal (to start the connect 4 server):
 
@@ -14,7 +14,7 @@ in another terminal:
 
     python connect4_gym_train_dqn.py
 
-to use the training agent:
+### to use the training agent:
 
 in one terminal (to start the connect 4 server):
 
@@ -33,7 +33,7 @@ in yet another terminal (play as the other player):
     go run main.go
 
 
-#### project explanation and goals
+## project explanation and goals
 
 This is an academic exercise in using chatGPT to create a connect 4 game and apply ML to it.
 
