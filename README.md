@@ -48,6 +48,62 @@ in yet another terminal (play as the other player):
 
     go run main.go
 
+## running over telnet on a linux server
+
+Compile the server and client.
+
+You'll need to have the server itself running.  One way to do this is through supervisord.  Another way is to create a service:
+
+Create a service file /etc/systemd/system/connect4.service with the contents:
+
+    [Unit]
+    Description=Connect4 Server Service
+    
+    [Service]
+    Restart=always
+    ExecStart=/path/to/connect4-api
+    
+    [Install]
+    WantedBy=multi-user.target
+
+And then:
+
+    sudo systemctl daemon-reload
+    sudo systemctl start connect4
+
+To makes sure the service always runs on system restart:
+
+    sudo systemctl enable connect4
+
+Then, to connect telnet connections to the client; this used to be done with xinetd, but that is now obsolete:
+
+Create a socket file /etc/systemd/system/connect4.socket with the contents:
+
+    [Unit]
+    Description=Connect4 Socket
+    
+    [Socket]
+    ListenStream=51233
+    Accept=yes
+    
+    [Install]
+    WantedBy=sockets.target
+
+Create a service file /etc/systemd/system/connect4@.socket
+
+    [Unit]
+    Description=Connect4 Service
+    Requires=connect4.socket
+    
+    [Service]
+    ExecStart=/path/to/connect4-client
+    StandardInput=socket
+
+Enable the socket:
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now connect4.socket
+
 
 ## project explanation and goals
 
