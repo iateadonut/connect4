@@ -2,6 +2,22 @@
 
 ## Quick Start
 
+### to play:
+
+in one terminal (to start the connect 4 server):
+
+    go run main.go
+
+in another terminal:
+
+    cd client
+    go run main.go
+
+in yet another terminal:
+
+    cd client
+    go run main.go
+
 ### to train:
 
 in one terminal (to start the connect 4 server):
